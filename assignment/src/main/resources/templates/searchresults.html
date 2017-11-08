@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Search Results</title>
+</head>
+<body>
+    <h1>Recruitment task - Jakub Widłak</h1>
+    <p>
+        Provide GitHub user name
+        <input type="text" name="nameText" />
+        <form th:action="@{/searchresult(username=${nameText.value})}">
+            <input type="submit" value="Search"/>
+        </form>
+    </p>
+    <div>
+        <p th:text="'Username: ' + ${searchresult.username}"/>
+    </div>
+    <div>
+        <table>
+            User emails:
+            <tr th:foreach="userEmail: ${searchresult.userEmails}">
+                <td th:text="${userEmail}"></td>
+            </tr>
+        </table>
+    </div>
+    <div>
+        <table>
+            User Repos:
+            <tr th:foreach="userRepo: ${searchresult.userRepos}">
+                <td th:text="${userRepo}"></td>
+            </tr>
+        </table>
+    </div>
+    <div>
+        <table>
+            Language statistics:
+            <tr th:foreach="language: ${searchresult.languageStatistic}">
+                <td th:text="${language.key}"></td>
+                <td th:text="${language.value}"></td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>GitHub Statistic</title>
+</head>
+<body>
+<h1>Recruitment task - Jakub Widłak</h1>
+<p>
+    Provide GitHub user name
+    <input th:object="nameText" type="text" name="nameText" />
+    <form th:action="@{/searchresult(username=${nameText.value})}">
+        <input type="submit" value="Search"/>
+    </form>
+</p>
+</body>
+</html>
