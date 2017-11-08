@@ -8,13 +8,13 @@
     <h1>Recruitment task - Jakub Widłak</h1>
     <p>
         Provide GitHub user name
-        <input type="text" name="nameText" />
-        <form th:action="@{/searchresult(username=${nameText.value})}">
-            <input type="submit" value="Search"/>
-        </form>
+    <form action="/searchresults">
+        <input type="text" name="username" />
+        <input type="submit" value="Search"/>
+    </form>
     </p>
     <div>
-        <p th:text="'Username: ' + ${searchresult.username}"/>
+        <p th:text="'Username: ' + ${param.username}"/>
     </div>
     <div>
         <table>
@@ -41,5 +41,6 @@
             </tr>
         </table>
     </div>
+
 </body>
 </html>

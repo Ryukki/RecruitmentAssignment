@@ -15,14 +15,13 @@ import java.util.List;
  * Created by Ryukki on 06.11.2017.
  */
 @org.springframework.stereotype.Controller
-@RequestMapping(value = "/searchresults")
 public class Controller {
     @Autowired
     private HttpClient httpClient;
 
-    @RequestMapping(method = RequestMethod.GET)
-    public String searchResults(@RequestParam(value = "username", required = false, defaultValue = "")String name, Model model){
-        httpClient.setUser(name);
+    @RequestMapping(value = "/searchresults", method = RequestMethod.GET)
+    public String searchResults(@RequestParam(value = "username", required = false, defaultValue = "")String username, Model model){
+        httpClient.setUser(username);
         model.addAttribute("username", this.httpClient.getUser());
         model.addAttribute("userEmails", this.httpClient.getUserEmails());
         List<String> userRepos = this.httpClient.getUserRepos();

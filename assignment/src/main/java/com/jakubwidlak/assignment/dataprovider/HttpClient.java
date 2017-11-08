@@ -29,9 +29,10 @@ public class HttpClient extends OkHttpClient {
 
     public List<String> getUserEmails(){
         List<String> emailsList = new ArrayList<>();
+        Response responseUserEmails = null;
         try {
             APIRequest apiRequest = new APIRequest(user +"/emails");
-            Response responseUserEmails = this.newCall(apiRequest.getRequest()).execute();
+            responseUserEmails = this.newCall(apiRequest.getRequest()).execute();
             if(!responseUserEmails.isSuccessful()){
                 emailsList.add(errorMessage);
                 return emailsList;
@@ -43,7 +44,6 @@ public class HttpClient extends OkHttpClient {
                 emailsList.add(errorMessage);
                 return emailsList;
             }
-
             JSONArray jsonUserEmails = new JSONArray(stringUserEmails);
             for (int i =0; i< jsonUserEmails.length(); i++){
                 emailsList.add((String) jsonUserEmails.getJSONObject(i).get("email"));
@@ -52,21 +52,24 @@ public class HttpClient extends OkHttpClient {
         } catch (IOException | JSONException e) {
             e.printStackTrace();
         }
+        finally {
+            responseUserEmails.close();
+        }
         return emailsList;
     }
 
     public List<String> getUserRepos(){
         List<String> repoList = new ArrayList<>();
+        Response responseUserRepos = null;
         try {
             APIRequest apiRequest = new APIRequest("users/"+ user +"/repos");
-            Response responseUserRepos = this.newCall(apiRequest.getRequest()).execute();
+            responseUserRepos = this.newCall(apiRequest.getRequest()).execute();
             if(!responseUserRepos.isSuccessful()){
                 repoList.add(errorMessage);
                 return repoList;
             }
 
             String stringUserRepos = responseUserRepos.body().string();
-
             JSONArray jsonUserRepos = new JSONArray(stringUserRepos);
             for (int i =0; i< jsonUserRepos.length(); i++){
                 repoList.add((String) jsonUserRepos.getJSONObject(i).get("name"));
@@ -75,28 +78,31 @@ public class HttpClient extends OkHttpClient {
         } catch (IOException | JSONException e) {
             e.printStackTrace();
         }
+        finally {
+            responseUserRepos.close();
+        }
         return repoList;
     }
 
     public Map<String, Integer> languageStatistics(List<String> repos){
         HashMap<String, Integer> statisticMap = new HashMap<>();
+        Response responseLanguageStatistics = null;
         Integer totalBytes = 0;
         for(String repoName: repos)
             try {
                 APIRequest apiRequest = new APIRequest("repos/"+ user +"/" + repoName + "/languages");
-                Response responseLanguageStatistics = this.newCall(apiRequest.getRequest()).execute();
+                responseLanguageStatistics = this.newCall(apiRequest.getRequest()).execute();
                 if(!responseLanguageStatistics.isSuccessful()){
                     statisticMap.put(errorMessage, 1);
                     return statisticMap;
                 }
 
                 String repoLanguages = responseLanguageStatistics.body().string();
-
                 JSONObject jsonRepoLanguages = new JSONObject(repoLanguages);
                 Iterator<?> keys = jsonRepoLanguages.keys();
                 while( keys.hasNext() ) {
                     String key = (String)keys.next();
-                    Integer repoValue= Integer.parseInt((String)jsonRepoLanguages.get(key));
+                    Integer repoValue = (Integer)jsonRepoLanguages.get(key);
                     totalBytes += repoValue;
                     if (statisticMap.containsKey(key)) {
                         Integer byteAmount = statisticMap.get(key) + repoValue;
@@ -108,6 +114,9 @@ public class HttpClient extends OkHttpClient {
                 statisticMap.put(stringTotalBytes, totalBytes);
             } catch (JSONException | IOException e1) {
                 e1.printStackTrace();
+            }
+            finally {
+                responseLanguageStatistics.close();
             }
 
         return computeStatistic(statisticMap);
