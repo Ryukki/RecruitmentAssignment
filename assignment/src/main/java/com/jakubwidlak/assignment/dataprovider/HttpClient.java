@@ -1,6 +1,5 @@
 package com.jakubwidlak.assignment.dataprovider;
 
-import com.sun.corba.se.impl.oa.poa.ActiveObjectMap;
 import okhttp3.OkHttpClient;
 import okhttp3.Response;
 import org.json.JSONArray;
@@ -9,20 +8,34 @@ import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 
 @Service
 public class HttpClient extends OkHttpClient {
-
-
-
     private String user;
     private String errorMessage = "Ooops, something went wrong :( ";
     private static final String stringTotalBytes= "totalBytes";
 
-    public void setUser(String user) {
+    public boolean setUser(String user) {
         this.user = user;
+        Response responseUser = null;
+        try {
+            APIRequest apiRequest = new APIRequest("users/" + user);
+            responseUser = this.newCall(apiRequest.getRequest()).execute();
+            if (!responseUser.isSuccessful()) {
+                return false;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            responseUser.close();
+        }
+        return true;
     }
+
     public String getUser() {
         return user;
     }
@@ -31,26 +44,35 @@ public class HttpClient extends OkHttpClient {
         List<String> emailsList = new ArrayList<>();
         Response responseUserEmails = null;
         try {
-            APIRequest apiRequest = new APIRequest(user +"/emails");
+            APIRequest apiRequest = new APIRequest("users/" + user + "/events");
             responseUserEmails = this.newCall(apiRequest.getRequest()).execute();
             if(!responseUserEmails.isSuccessful()){
                 emailsList.add(errorMessage);
                 return emailsList;
             }
 
-            //When information wasn't found the response is a JSON object not JSON Array
             String stringUserEmails = responseUserEmails.body().string();
-            if(!stringUserEmails.startsWith("[")){
-                emailsList.add(errorMessage);
-                return emailsList;
-            }
             JSONArray jsonUserEmails = new JSONArray(stringUserEmails);
             for (int i =0; i< jsonUserEmails.length(); i++){
-                emailsList.add((String) jsonUserEmails.getJSONObject(i).get("email"));
+                JSONObject jsonObject = jsonUserEmails.getJSONObject(i);
+                JSONObject payload = jsonObject.getJSONObject("payload");
+                JSONArray commits = payload.getJSONArray("commits");
+                for (int j = 0; j < commits.length(); j++) {
+                    JSONObject singleCommit = commits.getJSONObject(j);
+                    JSONObject author = singleCommit.getJSONObject("author");
+                    String username = jsonObject.getJSONObject("actor").getString("display_login");
+                    if (username.toLowerCase().equals(user.toLowerCase())) {
+                        String userEmail = author.getString("email");
+                        if (!emailsList.contains(userEmail))
+                            emailsList.add(userEmail);
+                    }
+                }
             }
-
         } catch (IOException | JSONException e) {
             e.printStackTrace();
+
+            emailsList.add(errorMessage);
+            return emailsList;
         }
         finally {
             responseUserEmails.close();
@@ -74,9 +96,10 @@ public class HttpClient extends OkHttpClient {
             for (int i =0; i< jsonUserRepos.length(); i++){
                 repoList.add((String) jsonUserRepos.getJSONObject(i).get("name"));
             }
-
         } catch (IOException | JSONException e) {
             e.printStackTrace();
+            repoList.add(errorMessage);
+            return repoList;
         }
         finally {
             responseUserRepos.close();
@@ -115,11 +138,13 @@ public class HttpClient extends OkHttpClient {
                 statisticMap.put(stringTotalBytes, totalBytes);
             } catch (JSONException | IOException e1) {
                 e1.printStackTrace();
+                List<String> errorArray = new ArrayList<String>();
+                errorArray.add(errorMessage);
+                return errorArray;
             }
             finally {
                 responseLanguageStatistics.close();
             }
-
         return computeStatistic(statisticMap);
     }
 
@@ -137,5 +162,4 @@ public class HttpClient extends OkHttpClient {
         }
         return languageStatistic;
     }
-
 }

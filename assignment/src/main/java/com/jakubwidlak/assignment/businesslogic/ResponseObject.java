@@ -10,14 +10,9 @@ import java.util.Map;
  */
 public class ResponseObject {
     private String username;
-    private String test="test";
     private List<String> userEmails;
     private List<String> userRepos;
     private List<String> languageStatistic;
-
-    public String getTest() {
-        return test;
-    }
 
     public ResponseObject() {
     }

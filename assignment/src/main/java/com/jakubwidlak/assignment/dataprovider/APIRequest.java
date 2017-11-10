@@ -10,6 +10,7 @@ public class APIRequest{
         request = new Request.Builder()
                 .url(url + parameter)
                 .get()
+                .addHeader("content-type", "application/vnd.github.v3+json")
                 .build();
     }
 
