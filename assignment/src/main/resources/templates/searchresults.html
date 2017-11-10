@@ -14,31 +14,40 @@
     </form>
     </p>
     <div>
-        <p th:text="'Username: ' + ${param.username}"/>
+        <p th:text="'Username: ' + ${responseObject.username}"/>
     </div>
-    <div>
+    <p>
+    <div th:if="${responseObject.userEmails != null}">
         <table>
             User emails:
-            <tr th:foreach="userEmail: ${searchresult.userEmails}">
+            <th:block th:object="${responseObject}">
+            <tr th:each="userEmail: *{userEmails}">
                 <td th:text="${userEmail}"></td>
             </tr>
+            </th:block>
         </table>
     </div>
-    <div>
+    </p>
+    <p>
+    <div th:if="${responseObject.userRepos != null}">
         <table>
-            User Repos:
-            <tr th:foreach="userRepo: ${searchresult.userRepos}">
+            User repos:
+            <th:block th:object="${responseObject}">
+            <tr th:each="userRepo: *{userRepos}">
                 <td th:text="${userRepo}"></td>
             </tr>
+            </th:block>
         </table>
     </div>
-    <div>
+    </p>
+    <div th:if="${responseObject.languageStatistic != null}">
         <table>
             Language statistics:
-            <tr th:foreach="language: ${searchresult.languageStatistic}">
-                <td th:text="${language.key}"></td>
-                <td th:text="${language.value}"></td>
+            <th:block th:object="${responseObject}">
+            <tr th:each="language: *{languageStatistic}">
+                <td th:text="${language}"></td>
             </tr>
+            </th:block>
         </table>
     </div>
 

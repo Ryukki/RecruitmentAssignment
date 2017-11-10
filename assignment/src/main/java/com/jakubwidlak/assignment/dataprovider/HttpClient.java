@@ -17,7 +17,7 @@ public class HttpClient extends OkHttpClient {
 
 
     private String user;
-    private String errorMessage = "Ooops, something went wrong :(";
+    private String errorMessage = "Ooops, something went wrong :( ";
     private static final String stringTotalBytes= "totalBytes";
 
     public void setUser(String user) {
@@ -84,7 +84,7 @@ public class HttpClient extends OkHttpClient {
         return repoList;
     }
 
-    public Map<String, Integer> languageStatistics(List<String> repos){
+    public List<String> languageStatistics(List<String> repos){
         HashMap<String, Integer> statisticMap = new HashMap<>();
         Response responseLanguageStatistics = null;
         Integer totalBytes = 0;
@@ -93,8 +93,9 @@ public class HttpClient extends OkHttpClient {
                 APIRequest apiRequest = new APIRequest("repos/"+ user +"/" + repoName + "/languages");
                 responseLanguageStatistics = this.newCall(apiRequest.getRequest()).execute();
                 if(!responseLanguageStatistics.isSuccessful()){
-                    statisticMap.put(errorMessage, 1);
-                    return statisticMap;
+                    List<String> errorArray = new ArrayList<String>();
+                    errorArray.add(errorMessage);
+                    return errorArray;
                 }
 
                 String repoLanguages = responseLanguageStatistics.body().string();
@@ -122,19 +123,19 @@ public class HttpClient extends OkHttpClient {
         return computeStatistic(statisticMap);
     }
 
-    public Map<String, Integer> computeStatistic(HashMap<String, Integer> statisticMap){
+    public List<String> computeStatistic(HashMap<String, Integer> statisticMap){
         Integer totalBytes = statisticMap.get(stringTotalBytes);
-        /*Iterator it = statisticMap.entrySet().iterator();
+        statisticMap.remove(stringTotalBytes);
+        Iterator it = statisticMap.entrySet().iterator();
+        List<String> languageStatistic = new ArrayList<String>();
         while (it.hasNext()){
             HashMap.Entry mapEntry = (HashMap.Entry)it.next();
-            if(mapEntry.getKey()!= stringTotalBytes){
-                double languagePercentage = (Integer)mapEntry.getValue()/totalBytes;
-
-            }
-        }*/
-        statisticMap.replaceAll((k, v)-> v/totalBytes);
-        statisticMap.remove(stringTotalBytes);
-        return statisticMap;
+            Integer temp = (Integer)mapEntry.getValue();
+            double languagePercentage = (double)temp/totalBytes;
+            String stringLanguage = mapEntry.getKey() + ": " + String.format("%.2g",languagePercentage) + "%";
+            languageStatistic.add(stringLanguage);
+        }
+        return languageStatistic;
     }
 
 }
