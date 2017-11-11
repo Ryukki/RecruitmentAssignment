@@ -26,15 +26,12 @@ public class Controller {
         }
         else{
             if(httpClient.setUser(username)){
-                responseObject.setUsername(this.httpClient.getUser());
                 responseObject.setUserEmails(this.httpClient.getUserEmails());
                 List<String> userRepos = this.httpClient.getUserRepos();
                 responseObject.setUserRepos(userRepos);
                 responseObject.setLanguageStatistic(this.httpClient.languageStatistics(userRepos));
             }
-            else{
-                responseObject.setUsername("Sorry user might not exist. Please check GitHub API status.");
-            }
+            responseObject.setUsername(this.httpClient.getUser());
         }
         model.addAttribute("responseObject", responseObject);
         return "searchresults";

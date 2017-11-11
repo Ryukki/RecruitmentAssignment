@@ -16,7 +16,9 @@ import java.util.List;
 @Service
 public class HttpClient extends OkHttpClient {
     private String user;
-    private String errorMessage = "Ooops, something went wrong :( ";
+    private static final String errorMessage = "Ooops, something went wrong :( ";
+    private static final String responseIssue = "Please check GitHub API status.";
+    private static final String exceptionMessage = "Contact app provider.";
     private static final String stringTotalBytes= "totalBytes";
 
     public boolean setUser(String user) {
@@ -26,10 +28,13 @@ public class HttpClient extends OkHttpClient {
             APIRequest apiRequest = new APIRequest("users/" + user);
             responseUser = this.newCall(apiRequest.getRequest()).execute();
             if (!responseUser.isSuccessful()) {
+                this.user = "Sorry user might not exist. Please check GitHub API status.";
                 return false;
             }
         } catch (IOException e) {
+            this.user = "Sorry user might not exist. Please check GitHub API status.";
             e.printStackTrace();
+            return false;
         } finally {
             responseUser.close();
         }
@@ -48,6 +53,7 @@ public class HttpClient extends OkHttpClient {
             responseUserEmails = this.newCall(apiRequest.getRequest()).execute();
             if(!responseUserEmails.isSuccessful()){
                 emailsList.add(errorMessage);
+                emailsList.add(responseIssue);
                 return emailsList;
             }
 
@@ -56,22 +62,24 @@ public class HttpClient extends OkHttpClient {
             for (int i =0; i< jsonUserEmails.length(); i++){
                 JSONObject jsonObject = jsonUserEmails.getJSONObject(i);
                 JSONObject payload = jsonObject.getJSONObject("payload");
-                JSONArray commits = payload.getJSONArray("commits");
-                for (int j = 0; j < commits.length(); j++) {
-                    JSONObject singleCommit = commits.getJSONObject(j);
-                    JSONObject author = singleCommit.getJSONObject("author");
-                    String username = jsonObject.getJSONObject("actor").getString("display_login");
-                    if (username.toLowerCase().equals(user.toLowerCase())) {
-                        String userEmail = author.getString("email");
-                        if (!emailsList.contains(userEmail))
-                            emailsList.add(userEmail);
+                if (payload.has("commits")) {
+                    JSONArray commits = payload.getJSONArray("commits");
+                    for (int j = 0; j < commits.length(); j++) {
+                        JSONObject singleCommit = commits.getJSONObject(j);
+                        JSONObject author = singleCommit.getJSONObject("author");
+                        String username = jsonObject.getJSONObject("actor").getString("display_login");
+                        if (username.toLowerCase().equals(user.toLowerCase())) {
+                            String userEmail = author.getString("email");
+                            if (!emailsList.contains(userEmail))
+                                emailsList.add(userEmail);
+                        }
                     }
                 }
             }
         } catch (IOException | JSONException e) {
             e.printStackTrace();
-
             emailsList.add(errorMessage);
+            emailsList.add(exceptionMessage);
             return emailsList;
         }
         finally {
@@ -88,6 +96,7 @@ public class HttpClient extends OkHttpClient {
             responseUserRepos = this.newCall(apiRequest.getRequest()).execute();
             if(!responseUserRepos.isSuccessful()){
                 repoList.add(errorMessage);
+                repoList.add(responseIssue);
                 return repoList;
             }
 
@@ -99,6 +108,7 @@ public class HttpClient extends OkHttpClient {
         } catch (IOException | JSONException e) {
             e.printStackTrace();
             repoList.add(errorMessage);
+            repoList.add(exceptionMessage);
             return repoList;
         }
         finally {
@@ -118,6 +128,7 @@ public class HttpClient extends OkHttpClient {
                 if(!responseLanguageStatistics.isSuccessful()){
                     List<String> errorArray = new ArrayList<String>();
                     errorArray.add(errorMessage);
+                    errorArray.add(responseIssue);
                     return errorArray;
                 }
 
@@ -140,6 +151,7 @@ public class HttpClient extends OkHttpClient {
                 e1.printStackTrace();
                 List<String> errorArray = new ArrayList<String>();
                 errorArray.add(errorMessage);
+                errorArray.add(exceptionMessage);
                 return errorArray;
             }
             finally {
