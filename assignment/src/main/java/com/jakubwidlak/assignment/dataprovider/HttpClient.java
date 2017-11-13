@@ -25,21 +25,25 @@ public class HttpClient extends OkHttpClient {
         apiRequest = new APIRequest();
     }
 
-    public boolean setUser(String user) {
-        this.user = user;
+    /**
+     * Checks if given user exist and sets corresponding field.
+     * @param username user being checked and set as a field value
+     * @return true if user exist
+     */
+    public boolean setUser(String username) {
+        this.user = "Sorry user might not exist. Please check GitHub API status.";
         try {
-            response = this.newCall(apiRequest.buildRequest("users/" + user)).execute();
+            response = this.newCall(apiRequest.buildRequest("users/" + username)).execute();
             if (!response.isSuccessful()) {
-                this.user = "Sorry user might not exist. Please check GitHub API status.";
                 return false;
             }
         } catch (IOException e) {
-            this.user = "Sorry user might not exist. Please check GitHub API status.";
             e.printStackTrace();
             return false;
         } finally {
             response.close();
         }
+        this.user = username;
         return true;
     }
 
@@ -47,22 +51,37 @@ public class HttpClient extends OkHttpClient {
         return user;
     }
 
+    /**
+     * Builds array with error information.
+     * @param errorCase reason of an error
+     * @return array with error information
+     */
+    private List<String> makeErrorArray(int errorCase){
+        List<String> errorArray = new ArrayList<>();
+        errorArray.add(errorMessage);
+        if(errorCase == 0)
+            errorArray.add(exceptionMessage);
+        else if (errorCase == 1)
+            errorArray.add(responseIssue);
+        return errorArray;
+    }
+
+    /**
+     * Requests list of user events which is used to get their emails.
+     * @return list of user email addresses
+     */
     public List<String> getUserEmails(){
-        List<String> emailsList = new ArrayList<>();
+        List<String> emailsList;
         try {
             response = this.newCall(apiRequest.buildRequest("users/" + user + "/events")).execute();
-            if(!response.isSuccessful()){
-                emailsList.add(errorMessage);
-                emailsList.add(responseIssue);
-                return emailsList;
+            if(!response.isSuccessful() && response.body()!=null){
+                return makeErrorArray(1);
             }
             String stringUserEmails = response.body().string();
             emailsList = readEmailJSONArray(stringUserEmails);
         } catch (IOException e) {
             e.printStackTrace();
-            emailsList.add(errorMessage);
-            emailsList.add(exceptionMessage);
-            return emailsList;
+            return makeErrorArray(0);
         }
         finally {
             response.close();
@@ -70,11 +89,15 @@ public class HttpClient extends OkHttpClient {
         return emailsList;
     }
 
-    public List<String> readEmailJSONArray(String stringUserEmails){
+    /**
+     * Extracts user emails from response string.
+     * @param stringUserEmails api response string
+     * @return list of user email addresses
+     */
+    private List<String> readEmailJSONArray(String stringUserEmails){
         List<String> emailsList = new ArrayList<>();
-        JSONArray jsonUserEmails = null;
         try {
-            jsonUserEmails = new JSONArray(stringUserEmails);
+            JSONArray jsonUserEmails = new JSONArray(stringUserEmails);
             for (int i =0; i< jsonUserEmails.length(); i++){
                 JSONObject jsonObject = jsonUserEmails.getJSONObject(i);
                 JSONObject payload = jsonObject.getJSONObject("payload");
@@ -94,9 +117,7 @@ public class HttpClient extends OkHttpClient {
             }
         } catch (JSONException e) {
             e.printStackTrace();
-            emailsList.add(errorMessage);
-            emailsList.add(exceptionMessage);
-            return emailsList;
+            return makeErrorArray(0);
         }
         if(emailsList.isEmpty()){
             emailsList.add("Sorry, we couldn't find any emails.");
@@ -104,14 +125,16 @@ public class HttpClient extends OkHttpClient {
         return  emailsList;
     }
 
+    /**
+     * Requests and processes list of user repositories.
+     * @return list of user repositories
+     */
     public List<String> getUserRepos(){
         List<String> repoList = new ArrayList<>();
         try {
             response = this.newCall(apiRequest.buildRequest("users/"+ user +"/repos")).execute();
-            if(!response.isSuccessful()){
-                repoList.add(errorMessage);
-                repoList.add(responseIssue);
-                return repoList;
+            if(!response.isSuccessful() && response.body()!=null){
+                return makeErrorArray(1);
             }
 
             String stringUserRepos = response.body().string();
@@ -121,9 +144,7 @@ public class HttpClient extends OkHttpClient {
             }
         } catch (IOException | JSONException e) {
             e.printStackTrace();
-            repoList.add(errorMessage);
-            repoList.add(exceptionMessage);
-            return repoList;
+            return makeErrorArray(0);
         }
         finally {
             response.close();
@@ -131,17 +152,19 @@ public class HttpClient extends OkHttpClient {
         return repoList;
     }
 
+    /**
+     * Requests languages for every user repository.
+     * @param repos list of user repositories
+     * @return list with language statistics
+     */
     public List<String> languageStatistics(List<String> repos){
         HashMap<String, Integer> statisticMap = new HashMap<>();
         Integer totalBytes = 0;
         for(String repoName: repos)
             try {
                 response = this.newCall(apiRequest.buildRequest("repos/"+ user +"/" + repoName + "/languages")).execute();
-                if(!response.isSuccessful()){
-                    List<String> errorArray = new ArrayList<>();
-                    errorArray.add(errorMessage);
-                    errorArray.add(responseIssue);
-                    return errorArray;
+                if(!response.isSuccessful() && response.body()!=null){
+                    return makeErrorArray(1);
                 }
 
                 String repoLanguages = response.body().string();
@@ -161,10 +184,7 @@ public class HttpClient extends OkHttpClient {
                 statisticMap.put(stringTotalBytes, totalBytes);
             } catch (JSONException | IOException e1) {
                 e1.printStackTrace();
-                List<String> errorArray = new ArrayList<>();
-                errorArray.add(errorMessage);
-                errorArray.add(exceptionMessage);
-                return errorArray;
+                return makeErrorArray(0);
             }
             finally {
                 response.close();
@@ -172,11 +192,16 @@ public class HttpClient extends OkHttpClient {
         return computeStatistic(statisticMap);
     }
 
-    public List<String> computeStatistic(HashMap<String, Integer> statisticMap){
+    /**
+     * Transforms Map to list of strings with percentage statistics.
+     * @param statisticMap Map with languages information
+     * @return list of percentage statistics
+     */
+    private List<String> computeStatistic(HashMap<String, Integer> statisticMap){
         Integer totalBytes = statisticMap.get(stringTotalBytes);
         statisticMap.remove(stringTotalBytes);
         Iterator it = statisticMap.entrySet().iterator();
-        List<String> languageStatistic = new ArrayList<String>();
+        List<String> languageStatistic = new ArrayList<>();
         while (it.hasNext()){
             HashMap.Entry mapEntry = (HashMap.Entry)it.next();
             Integer temp = (Integer)mapEntry.getValue();

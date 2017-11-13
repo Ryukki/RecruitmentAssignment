@@ -4,20 +4,25 @@ import okhttp3.Request;
 
 public class APIRequest{
 
-    private String url = "https://api.github.com/";
+    private String apiUrl = "https://api.github.com/";
     private Request request;
 
     public String getUrl() {
-        return url;
+        return apiUrl;
     }
 
     public void setUrl(String url) {
-        this.url = url;
+        this.apiUrl = url;
     }
 
-    public Request buildRequest(String parameter) {
+    /**
+     * Builds request to the url being sum of apiUrl and given parameter. Specifies accepted content type as json.
+     * @param requestPath directory on the server from apiUrl
+     * @return Built request object
+     */
+    public Request buildRequest(String requestPath) {
         request = new Request.Builder()
-                .url(url + parameter)
+                .url(apiUrl + requestPath)
                 .get()
                 .addHeader("content-type", "application/vnd.github.v3+json")
                 .build();

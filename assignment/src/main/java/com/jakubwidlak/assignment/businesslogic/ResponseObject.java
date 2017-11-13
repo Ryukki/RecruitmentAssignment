@@ -1,13 +1,9 @@
 package com.jakubwidlak.assignment.businesslogic;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-/**
- * Created by Ryukki on 09.11.2017.
- */
+
 public class ResponseObject {
     private String username;
     private List<String> userEmails;

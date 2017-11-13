@@ -10,14 +10,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
 
 
-/**
- * Created by Ryukki on 06.11.2017.
- */
 @org.springframework.stereotype.Controller
 public class Controller {
     @Autowired
     private HttpClient httpClient;
 
+    /**
+     * Adds information about given user to the model.
+     * @param username Username of user whose information has to be displayed
+     * @param model Model from mvc
+     * @return Mapping value
+     */
     @RequestMapping(value = "/searchresults", method = RequestMethod.GET)
     public String searchResults(@RequestParam(value = "username", required = false, defaultValue = "")String username, Model model){
         ResponseObject responseObject = new ResponseObject();
